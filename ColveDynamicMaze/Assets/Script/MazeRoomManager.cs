@@ -18,8 +18,8 @@ public class MazeRoomManager : MonoBehaviour
 		instance = this;
 	}
 
-	private Vector2[] roomLattice = new Vector2[]{new Vector2(0, 1), new Vector2(0, -1), new Vector2(-1, 0), new Vector2(1, 0)};
-	
+	private Vector2[] simpleRoomLattice = new Vector2[]{new Vector2(0, 1), new Vector2(0, -1), new Vector2(-1, 0), new Vector2(1, 0)};
+	public List<Vector2[]> complexRoomLattices;
 	private List<MazeRoomItem> roomItemList;
 	public List<MazeRoomItem> RoomItemList
 	{
@@ -40,7 +40,7 @@ public class MazeRoomManager : MonoBehaviour
 		}
 	}
 
-	public void CreateRooms(Vector2 roomCreateRange)
+	public void CreateRooms(int simpleRoomCount, int ComplexRoomCount = 0)
 	{
 		if (roomItemList == null)
 		{
@@ -50,18 +50,21 @@ public class MazeRoomManager : MonoBehaviour
 		{
 			roomItemList.Clear();
 		}
-		int roomNumber = Random.Range((int)roomCreateRange.x, (int)roomCreateRange.y);
-		for (int i = 0; i < roomNumber; i++)
+		for (int i = 0; i < simpleRoomCount; i++)
 		{
 			roomItemList.Add(CreateRoom());
 		}
+		for (int i = 0; i < ComplexRoomCount; i++)
+		{
+			roomItemList.Add(CreateRoom(false));
+		}
 	}
 
-	private MazeRoomItem CreateRoom()
+	private MazeRoomItem CreateRoom(bool isSimple = true)
 	{
 		if (roomItemList.Count == 0)
 		{
-			return new MazeRoomItem() {LatticeList = new[] {Vector2.zero}};
+			return new MazeRoomItem() {LatticeList = new List<Vector2>(){Vector2.zero}};
 		}
 		else
 		{
@@ -69,25 +72,57 @@ public class MazeRoomManager : MonoBehaviour
 			while (true)
 			{
 				MazeRoomItem linkItem = roomItemList[Random.RandomRange(0, roomItemList.Count)];
-				Vector2 linkPos = linkItem.LatticeList[Random.Range(0, linkItem.LatticeList.Length)];
-				linkPos += roomLattice[Random.Range(0, roomLattice.Length)];
+				Vector2 linkPos = linkItem.LatticeList[Random.Range(0, linkItem.LatticeList.Count)];
+				linkPos += simpleRoomLattice[Random.Range(0, simpleRoomLattice.Length)];
 				bool canCreate = true;
-				for (int i = 0; i < roomItemList.Count; i++)
+				if (isSimple)
 				{
-					if (roomItemList[i].LatticeList.Contains(linkPos))
+					for (int i = 0; i < roomItemList.Count; i++)
 					{
-						canCreate = false;
-						break;
+						if (roomItemList[i].LatticeList.Contains(linkPos))
+						{
+							canCreate = false;
+							break;
+						}
+					}
+					item.LatticeList.Add(linkPos);
+				}
+				else
+				{
+					if (complexRoomLattices == null || complexRoomLattices.Count == 0)
+					{
+						Debug.LogError("complexRoomLattices has nothing");
+						return CreateRoom();
+					}
+					item.LatticeList.Add(linkPos);
+					Vector2[] roomLattices = complexRoomLattices[Random.Range(0, complexRoomLattices.Count)];
+					for (int i = 0; i < roomLattices.Length; i++)
+					{
+						item.LatticeList.Add(linkPos + roomLattices[i]);
+					}
+					for (int i = 0; i < roomItemList.Count; i++)
+					{
+						for (int j = 0; j < item.LatticeList.Count; j++)
+						{
+							if (roomItemList[i].LatticeList.Contains(item.LatticeList[j]))
+							{
+								canCreate = false;
+								break;
+							}
+						}
+						if (!canCreate)
+						{
+							item.LatticeList.Clear();
+							break;
+						}
 					}
 				}
 				if (!canCreate)
 				{
 					continue;
 				}
-				item.LatticeList = new[] {linkPos};
 				return item;
 			}
 		}
 	}
-
 }

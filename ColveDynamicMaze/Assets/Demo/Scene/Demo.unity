@@ -309,7 +309,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   room: {fileID: 1829049934104882, guid: f4d81d33a576d6a4abe453c6a96b9423, type: 2}
-  roomCreateRange: {x: 10, y: 15}
+  simpleRoomCount: 5
+  complexRoomCount: 3
 --- !u!4 &1734113572
 Transform:
   m_ObjectHideFlags: 0
